@@ -14,7 +14,7 @@ function show_help() {
     exit 0
 }
 OPTIONS_PRESENT=false
-while getopts "d:u:h:b" flag
+while getopts "d:u:hb" flag
 do
     OPTIONS_PRESENT=true
     case "${flag}" in
