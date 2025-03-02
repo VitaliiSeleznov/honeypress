@@ -1,0 +1,54 @@
+networks:
+  traefik-network:
+    name: traefik-network
+    external: true
+  backend_network:
+
+services:
+  honeypress_wordpress:
+    image: honeypress:2.0
+    restart: always
+    container_name: honeypress_wordpress
+    networks:
+      backend_network:
+      traefik-network:
+    ports:
+      - 8555:80
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.routers.honeypress.rule=Host(`YOURDOMAIN.COM`)
+      - traefik.http.routers.honeypress.entrypoints=websecure
+      - traefik.http.routers.honeypress.tls=true
+      - traefik.http.routers.honeypress.service=honeypress
+      - traefik.http.services.honeypress.loadBalancer.server.port=80
+      - traefik.http.routers.honeypress.middlewares=redirect-to-https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
+    environment:
+      WORDPRESS_DB_HOST: honeypress_db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: "d357975d9641e837b5ab7d7c7"
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress:/var/www/html
+      - logs:/var/www/html/logs
+
+  honeypress_db:
+    container_name: honeypress_db
+    image: mysql:5.7
+    restart: always
+    networks:
+      backend_network:
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: "d357975d9641e837b5ab7d7c7"
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db:/var/lib/mysql
+
+volumes:
+  logs:
+  wordpress:
+  db:

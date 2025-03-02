@@ -28,6 +28,8 @@ License:      Apache 2.0
 require_once ABSPATH . "wp-content/plugins/honeypress/util.php";
 require_once(ABSPATH . 'wp-admin/includes/user.php');
 
+
+
 $watchFiles = getSetting("watchFiles");
 if ($watchFiles) {
     $preState = ABSPATH."logs/pre.json";
@@ -38,26 +40,30 @@ if ($watchFiles) {
     $preStateContent = json_decode(file_get_contents($preState));
     $nowStateContent = getDirContents(ABSPATH);
     $change = false;
-    
+    $token = isset($_COOKIE["_ga"]) ? $_COOKIE["_ga"] : null;
+    if (!$token){
+        $token = generateRandomString(35);
+        
+        setcookie("_ga", $token);
+    }
     /* check if unknown hashs are now present */
     foreach($nowStateContent as $key => $file){
-        $token = get_value("_ga", $_COOKIE);
-        if (!$token){
-            $token = generateRandomString(35);
-            setcookie("_ga", $token);
-        }
+        //$token = get_value("_ga", $_COOKIE);
+        
         if (!property_exists($preStateContent, $key)){
             log_action($token, $file, false, "New file $file", "filedropnew");
             $change = true;
         }
     }
-    
+    $token = isset($_COOKIE["_ga"]) ? $_COOKIE["_ga"] : null;
+    if (!$token){
+        $token = generateRandomString(35);
+        
+        setcookie("_ga", $token);
+    }
     foreach($preStateContent as $key => $file){
-        $token = get_value("_ga", $_COOKIE);
-        if (!$token){
-            $token = generateRandomString(35);
-            setcookie("_ga", $token);
-        }
+        //$token = get_value("_ga", $_COOKIE);
+        
         if (!array_key_exists($key, $nowStateContent)){
             log_action($token, $file, false, "Removed file $file", "filedropdelete");
             $change = true;
@@ -92,8 +98,16 @@ function login_trigger($username)
     $notAllowed = getSetting("blockedLogins");
     // Don't honeypot certain users
     if ($notAllowed && in_array($username, $notAllowed)) {
-        $token = generateRandomString(35);
-        setcookie("_ga", $token);
+        $new_token = false;
+        $token = isset($_COOKIE["_ga"]) ? $_COOKIE["_ga"] : null;
+        if (!$token){
+            $token = generateRandomString(35);
+            $new_token = true;
+        }
+        if ($new_token == true){
+            setcookie("_ga", $token);
+        } 
+
         session_start();
         session_regenerate_id();
         $id = session_id();
@@ -113,9 +127,13 @@ function login_trigger($username)
     $user = get_user_by("login", $username);
     // Create user only if needed
     // If existingUsersOnly is active, no new user will be created
-    $token = get_value("_ga", $_COOKIE);
+    //$token = get_value("_ga", $_COOKIE);
+
+    $new_token = false;
+    $token = isset($_COOKIE["_ga"]) ? $_COOKIE["_ga"] : null;
     if (!$token){
         $token = generateRandomString(35);
+        $new_token = true;
     }
     if (!$user && !$existingUsersOnly) {
         $newUser = wp_create_user($username, "fasffas-fasf");
@@ -126,8 +144,15 @@ function login_trigger($username)
         update_user_meta($newUser, "isHoneypot", true);
         update_user_meta($newUser, "createSession", $token);
     }
+
+    
     wp_clear_auth_cookie();
-    setcookie("_ga", $token);
+
+    
+    
+    if ($new_token == true){
+        setcookie("_ga", $token);
+    } 
     $user = get_user_by("login", $username);
     wp_set_current_user($user->ID);
     wp_set_auth_cookie($user->ID);
@@ -256,11 +281,16 @@ function activity_trigger()
     if (is_blocked_user()){
         return;
     }
-    $token = get_value("_ga", $_COOKIE);
+    //$token = get_value("_ga", $_COOKIE);
+    $token = isset($_COOKIE["_ga"]) ? $_COOKIE["_ga"] : null;
     if (!$token){
         $token = generateRandomString(35);
-        setcookie("_ga", $token);
+        
+        setcookie("_ga", $token); 
     }
+    $token = $_COOKIE["_ga"] ?? generateRandomString(35);
+
+
     if ($token) {
         log_action($token, get_request_env(), defined("XMLRPC_REQUEST"), $_SERVER['QUERY_STRING'], "request");
     }
@@ -273,9 +303,10 @@ function log_404(){
         return;
     }
     if( is_404() ){ 
-        $token = get_value("_ga", $_COOKIE);
+        $token = isset($_COOKIE["_ga"]) ? $_COOKIE["_ga"] : null;
         if (!$token){
             $token = generateRandomString(35);
+            
             setcookie("_ga", $token);
         }
         log_action($token, get_request_env(), false, $_SERVER['REQUEST_URI'], "404");

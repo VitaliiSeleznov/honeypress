@@ -1,4 +1,4 @@
-from wordpress:latest
+FROM wordpress:6.7.2
 
 ADD honeypress.json /var/www/html/honeypress.json
 ADD .htaccess /var/www/html/.htaccess

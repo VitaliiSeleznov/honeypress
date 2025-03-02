@@ -1,5 +1,7 @@
 #!/bin/bash
+docker compose -f compose-for-traefik.yaml down
+docker volume rm honeypress_logs
+docker volume rm honeypress_wordpress
+docker volume rm honeypress_db
 
-docker rm -f $(docker ps -aq)
-docker volume rm $(docker volume ls -q) 
-rm ./instances/*
+

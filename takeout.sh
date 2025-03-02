@@ -4,5 +4,5 @@ CONTAINERS=$(docker ps  | grep -E "honeypress_wordpress"  | awk '{print $NF}' | 
 
 for container in $CONTAINERS
 do
-  ./report.sh $container > takeouts/$container.log
+  ./report.sh $container > takeouts/honeypress_wordpress.log
 done
